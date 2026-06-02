@@ -188,9 +188,8 @@ public class StrikeCommand implements Command {
                 .addField("👮 Moderator", event.getMember().getEffectiveName() + "\n" + event.getMember().getAsMention(), false)
                 .addField("📊 Strike Count", getStrikeCountEmojis(strikeCount) + "\n" + strikeCount + " " + strikeWord, false)
                 .addField("📝 Reason", reason, false)
-                .addField("🕒 Timestamp", discordTimestamp, false)
                 .addField("⚡ Action ID", actionId, false)
-                .setFooter("Server Moderation System • Strike Issued")
+                .setFooter("Strike Issued")
                 .setTimestamp(java.time.Instant.now())
                 .setThumbnail(user.getEffectiveAvatarUrl());
         
@@ -201,7 +200,8 @@ public class StrikeCommand implements Command {
                 .addField("User ID", user.getId(), false)
                 .addField("Reason", reason, false)
                 .addField("Now has:", strikeCount + " " + strikeWord, false)
-                .setFooter(String.format("Strike System • %s", LocalDateTime.now().format(java.time.format.DateTimeFormatter.ofPattern("M/d/yyyy h:mm a"))));
+                .setFooter("Strike System")
+                .setTimestamp(java.time.Instant.now());
 
         TextChannel loggingChannel = event.getJDA().getTextChannelById("1472814682245955627");
         if (loggingChannel != null) {
@@ -375,8 +375,8 @@ public class StrikeCommand implements Command {
                 .addField("User ID", user.getId(), false)
                 .addField("Reason", reason, false)
                 .addField("Now has:", strikeCount + " " + strikeWord, false)
-                .setFooter(String.format("Strike System • %s", 
-                        LocalDateTime.now().format(java.time.format.DateTimeFormatter.ofPattern("M/d/yyyy h:mm a"))));
+                .setFooter("Strike System")
+                .setTimestamp(java.time.Instant.now());
 
         TextChannel loggingChannel = guild.getJDA().getTextChannelById("1472814682245955627");
         if (loggingChannel != null) {
@@ -503,9 +503,8 @@ public class StrikeCommand implements Command {
                 .addField("📋 Target User", user.getName() + "\n" + user.getId() + "\n" + user.getAsMention(), false)
                 .addField("👮 Administrator", event.getMember().getEffectiveName() + "\n" + event.getMember().getAsMention(), false)
                 .addField("📊 Strikes Cleared", strikeCount + " strikes removed", false)
-                .addField("🕒 Timestamp", discordTimestamp, false)
                 .addField("⚡ Action ID", actionId, false)
-                .setFooter("Server Moderation System • Strikes Cleared")
+                .setFooter("Strikes Cleared")
                 .setTimestamp(java.time.Instant.now())
                 .setThumbnail(user.getEffectiveAvatarUrl());
         
@@ -515,7 +514,8 @@ public class StrikeCommand implements Command {
                 .setDescription(String.format("All strikes have been cleared for <@%s> (%s).", user.getId(), user.getName()))
                 .addField("User ID", user.getId(), false)
                 .addField("Strikes Cleared", String.valueOf(strikeCount), false)
-                .setFooter(String.format("Strike System • %s", LocalDateTime.now().format(java.time.format.DateTimeFormatter.ofPattern("M/d/yyyy h:mm a"))));
+                .setFooter("Strike System")
+                .setTimestamp(java.time.Instant.now());
 
         TextChannel loggingChannel = event.getJDA().getTextChannelById("1472814682245955627");
         if (loggingChannel != null) {
@@ -535,8 +535,8 @@ public class StrikeCommand implements Command {
                 .setDescription(String.format("Strike #%d has been removed from <@%s> (%s).", strikeNumber, user.getId(), user.getName()))
                 .addField("User ID", user.getId(), false)
                 .addField("Original Reason", reason, false)
-                .setFooter(String.format("Strike System • %s", 
-                        LocalDateTime.now().format(java.time.format.DateTimeFormatter.ofPattern("M/d/yyyy h:mm a"))));
+                .setFooter("Strike System")
+                .setTimestamp(java.time.Instant.now());
 
         TextChannel loggingChannel = event.getJDA().getTextChannelById("1472814682245955627");
         if (loggingChannel != null) {
@@ -552,8 +552,8 @@ public class StrikeCommand implements Command {
                 .addField("User ID", user.getId(), false)
                 .addField("Previous Reason", oldReason, false)
                 .addField("New Reason", newReason, false)
-                .setFooter(String.format("Strike System • %s", 
-                        LocalDateTime.now().format(java.time.format.DateTimeFormatter.ofPattern("M/d/yyyy h:mm a"))));
+                .setFooter("Strike System")
+                .setTimestamp(java.time.Instant.now());
 
         TextChannel loggingChannel = event.getJDA().getTextChannelById("1472814682245955627");
         if (loggingChannel != null) {

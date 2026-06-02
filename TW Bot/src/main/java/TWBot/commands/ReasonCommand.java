@@ -339,7 +339,7 @@ public class ReasonCommand implements Command {
                             "└─ **Moderator:** Trophy Wars (ID: `0`)\n" +
                             "└─ **Reason:** Breaking server rules\n" +
                             "└─ **Source:** Trophy Wars Community / Audit Log\n" +
-                            "└─ **Date:** " + DateTimeFormatter.ofPattern("MMM dd, yyyy HH:mm:ss").withZone(ZoneId.systemDefault()).format(Instant.now()) + "\n")
+                            "└─ **Date:** <t:" + (Instant.now().getEpochSecond()) + ":F>\n")
                     .setColor(new Color(100, 150, 255))
                     .setTimestamp(Instant.now());
             event.getHook().sendMessageEmbeds(historyEmbed.build()).queue();

@@ -129,7 +129,7 @@ public class OwnershipPingService {
                     .addField("🕒 Current Date", now.format(DATE_FORMATTER), true)
                     .addField("🗓️ Next Reminder", nextPingDate.format(DATE_FORMATTER), true)
                     .addField("📝 Note", "Please ensure you are active and checking for any important updates in the group chat.", false)
-                    .setFooter("Server Management System • 6-Month Reminder")
+                    .setFooter("Ownership Reminder")
                     .setTimestamp(Instant.now());
 
             channel.sendMessage(finalMentions).setEmbeds(embed.build()).queue(

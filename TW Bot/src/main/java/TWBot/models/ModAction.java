@@ -70,8 +70,6 @@ public class ModAction {
     }
 
     public String getFormattedDate() {
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("MMM dd, yyyy HH:mm:ss")
-                .withZone(ZoneId.systemDefault());
-        return formatter.format(Instant.ofEpochMilli(timestamp));
+        return "<t:" + (timestamp / 1000) + ":F>";
     }
 }

@@ -182,12 +182,11 @@ public class AppealCommand implements Command {
                             String.format("```%s```", strike.getReason()), false)
                     .addField("💬 Appeal Reason",
                             String.format("```%s```", reason), false)
-                    .addField("🕒 Timestamp", discordTimestamp, false)
                     .addField("⚡ Action ID", String.format("`%s`", generateActionId()), false)
                     .addField("🛠️ Action Required",
                             String.format("Use `/reviewappeal %d approve/deny reason`", appealId), false)
                     .setThumbnail(user.getEffectiveAvatarUrl())
-                    .setFooter("Server Moderation System • Strike Appealed")
+                    .setFooter("Strike Appealed")
                     .setTimestamp(java.time.Instant.now());
 
             String rolePing = String.format("<@&%s> <@&%s>", BotConfig.OVERSEER_ROLE_ID, BotConfig.MANAGER_ROLE_ID);
@@ -326,8 +325,8 @@ public class AppealCommand implements Command {
                     .addField("Original Strike", strike != null ? strike.getReason() : "Unknown", false)
                     .addField("User's Appeal", appeal.getReason(), false)
                     .addField("Staff Decision", reason, false)
-                    .setFooter(String.format("Strike System • %s", 
-                            java.time.LocalDateTime.now().format(java.time.format.DateTimeFormatter.ofPattern("M/d/yyyy h:mm a"))));
+                    .setFooter("Strike System")
+                    .setTimestamp(java.time.Instant.now());
 
             logChannel.sendMessageEmbeds(logEmbed.build()).queue();
         });
@@ -343,8 +342,8 @@ public class AppealCommand implements Command {
                 .setDescription(String.format("Appeals have been reset for <@%s> (%s).", targetUser.getId(), targetUser.getName()))
                 .addField("User ID", targetUser.getId(), false)
                 .addField("Result", "User can now submit appeals again", false)
-                .setFooter(String.format("Strike System • %s", 
-                        java.time.LocalDateTime.now().format(java.time.format.DateTimeFormatter.ofPattern("M/d/yyyy h:mm a"))));
+                .setFooter("Strike System")
+                .setTimestamp(java.time.Instant.now());
 
         logChannel.sendMessageEmbeds(logEmbed.build()).queue();
     }
