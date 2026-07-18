@@ -50,6 +50,7 @@ public class CommandEventListener extends ListenerAdapter {
         registerCommand(new VoiceCommand(bot));
         registerCommand(new SayCommand(bot));
         registerCommand(new CommandPermissionsCommand(bot));
+        registerCommand(new OwnershipCycleCommand(bot));
         registerCommand(new StealCommand(bot));
     }
 
@@ -88,6 +89,7 @@ public class CommandEventListener extends ListenerAdapter {
             allCommands.addAll(new VoiceCommand(bot).getCommandDataList());
             allCommands.addAll(new SayCommand(bot).getCommandDataList());
             allCommands.addAll(new CommandPermissionsCommand(bot).getCommandDataList());
+            allCommands.addAll(new OwnershipCycleCommand(bot).getCommandDataList());
             allCommands.addAll(new StealCommand(bot).getCommandDataList());
 
             // Clear global commands to avoid duplicates if they were registered previously

@@ -131,7 +131,8 @@ public class HelpCommand implements Command {
                 "**`/bulkremovedemotion`** - Bulk remove from demotion list **(Admin+)**\n" +
                 "**`/void-checker`** - Analyze message reactions **(Moderator+)**\n" +
                 "**`/say`** - Make the bot say something **(Admin+)**\n" +
-                "**`/cmdperm`** - Manage command permissions **(Ownership Only)**",
+                "**`/cmdperm`** - Manage command permissions **(Ownership Only)**\n" +
+                "**`/qcheck`** - View ownership schedule status **(Ownership Only)**",
                 false
         );
     }

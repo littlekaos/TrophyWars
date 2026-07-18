@@ -133,7 +133,7 @@ public class BotConfig {
     }
 
     public static final String GUILD_ID = "1304664994205667408";
-    public static final String OWNER_USER_ID = "689519709988585648";
+    public static final String OWNER_USER_ID = "529480987525251082";
 
     // Roles
     public static final String SERVER_OWNERSHIP_ROLE_ID = "1426617224730247278";
