@@ -51,6 +51,7 @@ public class CommandEventListener extends ListenerAdapter {
         registerCommand(new SayCommand(bot));
         registerCommand(new CommandPermissionsCommand(bot));
         registerCommand(new StealCommand(bot));
+        registerCommand(new PaymentDueCommand());
     }
 
     private void registerCommand(Command command) {
@@ -89,6 +90,7 @@ public class CommandEventListener extends ListenerAdapter {
             allCommands.addAll(new SayCommand(bot).getCommandDataList());
             allCommands.addAll(new CommandPermissionsCommand(bot).getCommandDataList());
             allCommands.addAll(new StealCommand(bot).getCommandDataList());
+            allCommands.addAll(new PaymentDueCommand().getCommandDataList());
 
             // Clear global commands to avoid duplicates if they were registered previously
             jda.updateCommands().queue();
