@@ -24,7 +24,18 @@ public class MessageEventListener extends ListenerAdapter {
 
     @Override
     public void onMessageReceived(MessageReceivedEvent event) {
+        boolean isArchiveChannel = event.isFromGuild()
+                && bot.getStaffChannelArchiveService() != null
+                && bot.getStaffChannelArchiveService().isArchiveChannel(
+                        event.getChannel().getId(),
+                        event.getChannel().getName());
+
         if (event.getAuthor().isBot()) {
+            // Still archive bot embeds/logs from staff moderation channels
+            if (isArchiveChannel) {
+                bot.getStaffChannelArchiveService().archiveMessageLive(event.getMessage());
+            }
+
             if (event.isWebhookMessage()) {
             } else {
                 String channelId = event.getChannel().getId();
@@ -40,14 +51,18 @@ public class MessageEventListener extends ListenerAdapter {
         bot.getMessageCache().cacheMessage(event.getMessage(), event.getAuthor().getId());
 
         if (event.isFromGuild()) {
-            bot.getDataService().logMessage(
-                    event.getGuild().getId(),
-                    event.getChannel().getId(),
-                    event.getMessageId(),
-                    event.getAuthor().getId(),
-                    event.getMessage().getContentRaw(),
-                    "RECEIVED"
-            );
+            if (isArchiveChannel) {
+                bot.getStaffChannelArchiveService().archiveMessageLive(event.getMessage());
+            } else {
+                bot.getDataService().logMessage(
+                        event.getGuild().getId(),
+                        event.getChannel().getId(),
+                        event.getMessageId(),
+                        event.getAuthor().getId(),
+                        event.getMessage().getContentRaw(),
+                        "RECEIVED"
+                );
+            }
         }
 
         Member member = event.getMember();

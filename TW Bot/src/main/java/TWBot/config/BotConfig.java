@@ -154,13 +154,30 @@ public class BotConfig {
     public static final String EVENT_ANNOUNCEMENT_TEAM_ROLE_ID = "1312910690633121813";
 
     // Channels
-    public static final String MOD_LOG_CHANNEL_ID = "1468368657162702969";
+    public static final String MOD_LOG_CHANNEL_ID = "1468368657162702969"; // tw-moderation-logs
     public static final String STAFF_NOTIFICATION_CHANNEL_ID = "1455394393598071037";
     public static final String MANAGER_CHAT_CHANNEL_ID = "1312885935020441682";
     public static final String ADMIN_CHAT_CHANNEL_ID = "1312885935020441682";
     public static final String STAFF_CHAT_CHANNEL_ID = "1313111417406226513";
-    public static final String STAFF_STRIKES_CHANNEL_ID = "1472814682245955627";
-    public static final String STAFF_STRIKE_LOG_CHANNEL_ID = "1474429991365116054";
+    public static final String STAFF_STRIKES_CHANNEL_ID = "1472814682245955627"; // staff-strikes
+    public static final String STAFF_STRIKE_LOG_CHANNEL_ID = "1474429991365116054"; // staff-strikes-logging
+
+    /** Channels whose full history is archived into tw_message_logs (IDs + name fallbacks). */
+    public static final List<String> ARCHIVE_CHANNEL_IDS = Arrays.asList(
+            NAME_LOG_CHANNEL,              // staff-eventname
+            STAFF_STRIKES_CHANNEL_ID,       // staff-strikes
+            STAFF_STRIKE_LOG_CHANNEL_ID,    // staff-strikes-logging
+            MOD_LOG_CHANNEL_ID,             // tw-moderation-logs
+            STAFF_CHAT_CHANNEL_ID           // staff chat / appeals fallback
+    );
+
+    public static final List<String> ARCHIVE_CHANNEL_NAMES = Arrays.asList(
+            "staff-eventname",
+            "staff-strikes",
+            "strike-appeals",
+            "staff-strikes-logging",
+            "tw-moderation-logs"
+    );
 
     // Message IDs
     public static final String DEMOTION_LIST_MESSAGE_ID = "1474509068688425196";

@@ -1,29 +1,73 @@
 package TWBot.database;
 
 import TWBot.config.BotConfig;
+
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
 import java.sql.*;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.Comparator;
+import java.util.List;
 import java.util.Properties;
 import java.util.concurrent.Executor;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
+import java.util.stream.Stream;
 
 public class DatabaseManager {
+    private static final int MAX_BACKUPS = 10;
+    private static final long PERIODIC_BACKUP_HOURS = 6;
+    private static final DateTimeFormatter BACKUP_TIMESTAMP =
+            DateTimeFormatter.ofPattern("yyyyMMdd-HHmmss");
+
     private static volatile DatabaseManager instance;
     private final BotConfig config;
     private final String jdbcUrl;
+    private final Path dbPath;
+    private final Path backupDir;
+    private final ScheduledExecutorService backupScheduler;
     private Connection sharedConnection;
 
     private DatabaseManager() {
         this.config = new BotConfig();
 
         String dbUrl = config.getEnvOrDefault("DATABASE_URL", null);
+        Path resolvedDbPath;
 
         if (dbUrl == null || dbUrl.isEmpty()) {
             String path = config.getEnvOrDefault("DATABASE_PATH", "tw-bot.db");
-            dbUrl = "jdbc:sqlite:" + path;
+            resolvedDbPath = Path.of(path).toAbsolutePath().normalize();
+            dbUrl = "jdbc:sqlite:" + resolvedDbPath;
+        } else if (dbUrl.startsWith("jdbc:sqlite:")) {
+            String rawPath = dbUrl.substring("jdbc:sqlite:".length());
+            if (rawPath.startsWith("//")) {
+                rawPath = rawPath.substring(2);
+            }
+            resolvedDbPath = Path.of(rawPath).toAbsolutePath().normalize();
+            dbUrl = "jdbc:sqlite:" + resolvedDbPath;
+        } else {
+            resolvedDbPath = null;
         }
 
         this.jdbcUrl = dbUrl;
+        this.dbPath = resolvedDbPath;
+        this.backupDir = resolvedDbPath != null
+                ? resolvedDbPath.getParent().resolve("backups")
+                : Path.of("backups").toAbsolutePath().normalize();
+        this.backupScheduler = Executors.newSingleThreadScheduledExecutor(r -> {
+            Thread t = new Thread(r, "db-backup");
+            t.setDaemon(true);
+            return t;
+        });
+
         System.out.println("Using SQLite DB: " + jdbcUrl);
-        
+
+        restoreFromLatestBackupIfMissing();
+
         try {
             this.sharedConnection = createNewConnection();
         } catch (SQLException e) {
@@ -72,7 +116,119 @@ public class DatabaseManager {
         }
     }
 
+    public Path getDbPath() {
+        return dbPath;
+    }
+
+    public Path getBackupDir() {
+        return backupDir;
+    }
+
+    public void startPeriodicBackups() {
+        if (dbPath == null) {
+            System.out.println("[DatabaseBackup] Skipping periodic backups (non-file database).");
+            return;
+        }
+
+        try {
+            Path initial = createBackup();
+            System.out.println("[DatabaseBackup] Startup backup created: " + initial);
+        } catch (Exception e) {
+            System.err.println("[DatabaseBackup] Startup backup failed: " + e.getMessage());
+        }
+
+        backupScheduler.scheduleAtFixedRate(() -> {
+            try {
+                Path backup = createBackup();
+                System.out.println("[DatabaseBackup] Periodic backup created: " + backup);
+            } catch (Exception e) {
+                System.err.println("[DatabaseBackup] Periodic backup failed: " + e.getMessage());
+            }
+        }, PERIODIC_BACKUP_HOURS, PERIODIC_BACKUP_HOURS, TimeUnit.HOURS);
+        System.out.println("[DatabaseBackup] Periodic backups scheduled every " + PERIODIC_BACKUP_HOURS + " hours.");
+    }
+
+    /**
+     * Creates a consistent SQLite snapshot under backups/, keeps a latest copy, and prunes old files.
+     */
+    public synchronized Path createBackup() throws SQLException, IOException {
+        if (dbPath == null) {
+            throw new SQLException("Backups are only supported for SQLite file databases.");
+        }
+        if (sharedConnection == null || sharedConnection.isClosed()) {
+            sharedConnection = createNewConnection();
+        }
+
+        Files.createDirectories(backupDir);
+
+        String stamp = LocalDateTime.now().format(BACKUP_TIMESTAMP);
+        Path stampedBackup = backupDir.resolve(dbPath.getFileName().toString().replace(".db", "") + "-" + stamp + ".db");
+        Path latestBackup = backupDir.resolve(dbPath.getFileName().toString().replace(".db", "") + ".latest.db");
+
+        Files.deleteIfExists(stampedBackup);
+
+        String sqlitePath = stampedBackup.toAbsolutePath().toString().replace('\\', '/').replace("'", "''");
+        try (Statement stmt = sharedConnection.createStatement()) {
+            stmt.execute("VACUUM INTO '" + sqlitePath + "'");
+        }
+
+        Files.copy(stampedBackup, latestBackup, StandardCopyOption.REPLACE_EXISTING);
+        pruneOldBackups();
+
+        System.out.println("[DatabaseBackup] Saved backup to " + stampedBackup);
+        return stampedBackup;
+    }
+
+    private void restoreFromLatestBackupIfMissing() {
+        if (dbPath == null) {
+            return;
+        }
+        try {
+            if (Files.exists(dbPath) && Files.size(dbPath) > 0) {
+                return;
+            }
+            Path latestBackup = backupDir.resolve(dbPath.getFileName().toString().replace(".db", "") + ".latest.db");
+            if (!Files.exists(latestBackup) || Files.size(latestBackup) == 0) {
+                return;
+            }
+            Files.createDirectories(dbPath.getParent());
+            Files.copy(latestBackup, dbPath, StandardCopyOption.REPLACE_EXISTING);
+            System.out.println("[DatabaseBackup] Restored missing database from " + latestBackup);
+        } catch (IOException e) {
+            System.err.println("[DatabaseBackup] Failed to restore from backup: " + e.getMessage());
+        }
+    }
+
+    private void pruneOldBackups() throws IOException {
+        String prefix = dbPath.getFileName().toString().replace(".db", "") + "-";
+        try (Stream<Path> stream = Files.list(backupDir)) {
+            List<Path> stamped = stream
+                    .filter(Files::isRegularFile)
+                    .filter(p -> {
+                        String name = p.getFileName().toString();
+                        return name.startsWith(prefix) && name.endsWith(".db");
+                    })
+                    .sorted(Comparator.comparing(Path::getFileName).reversed())
+                    .toList();
+
+            for (int i = MAX_BACKUPS; i < stamped.size(); i++) {
+                Files.deleteIfExists(stamped.get(i));
+            }
+        }
+    }
+
     public void shutdown() {
+        backupScheduler.shutdownNow();
+
+        try {
+            if (dbPath != null && sharedConnection != null && !sharedConnection.isClosed()) {
+                createBackup();
+                System.out.println("[DatabaseBackup] Shutdown backup complete.");
+            }
+        } catch (Exception e) {
+            System.err.println("[DatabaseBackup] Shutdown backup failed: " + e.getMessage());
+        }
+
         try {
             if (sharedConnection != null && !sharedConnection.isClosed()) {
                 sharedConnection.close();

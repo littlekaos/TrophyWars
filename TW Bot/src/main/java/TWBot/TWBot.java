@@ -32,6 +32,7 @@ public class TWBot {
     private VoiceChannelManager voiceChannelManager;
     private EventsSetupManager eventsSetupManager;
     private OwnershipPingService ownershipPingService;
+    private StaffChannelArchiveService staffChannelArchiveService;
     private MessageCache messageCache;
     private UserCache userCache;
 
@@ -55,7 +56,7 @@ public class TWBot {
                 return;
             }
             System.out.println("Database connection successful!");
-
+            dbManager.startPeriodicBackups();
 
             this.eventNameRepository = new SQLiteEventNameRepository();
             System.out.println("Event name repository initialized!");
@@ -114,11 +115,14 @@ public class TWBot {
             this.appealScannerService.initialize(jda);
             this.roleRestorationService.initialize(jda);
             this.demotionSyncService.initialize(jda);
-            // this.strikeScannerService.initialize(jda);
             this.demotionService.updateDemotionListMessage(jda);
 
             this.ownershipPingService = new OwnershipPingService(jda, dataService);
             this.ownershipPingService.start();
+
+            this.staffChannelArchiveService = new StaffChannelArchiveService(dataService);
+            this.staffChannelArchiveService.start(jda);
+            this.strikeScannerService.initialize(jda);
 
             jda.getGuilds().forEach(guild -> {
                 dataService.setMuteRoleId(guild.getId(), BotConfig.MUTE_ROLE_ID);
@@ -206,6 +210,10 @@ public class TWBot {
 
     public EventsSetupManager getEventsSetupManager() {
         return eventsSetupManager;
+    }
+
+    public StaffChannelArchiveService getStaffChannelArchiveService() {
+        return staffChannelArchiveService;
     }
 
     public void shutdown() {

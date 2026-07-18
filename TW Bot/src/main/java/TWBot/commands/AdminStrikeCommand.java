@@ -2,6 +2,7 @@ package TWBot.commands;
 
 import TWBot.TWBot;
 import TWBot.config.BotConfig;
+import TWBot.database.DatabaseManager;
 import TWBot.models.Strike;
 import TWBot.services.AppealScannerService;
 import TWBot.services.RoleRestorationService;
@@ -36,7 +37,7 @@ public class AdminStrikeCommand implements Command {
     public List<CommandData> getCommandDataList() {
         return List.of(
                 Commands.slash("dbinfo", "Show database statistics."),
-                Commands.slash("backupstrikes", "Create a backup of the strikes database."),
+                Commands.slash("backupstrikes", "Create a full backup of the bot database."),
                 Commands.slash("checkroles", "Check and restore temporary role demotions (Admin Only)"),
                 Commands.slash("appealscanner", "Manage the appeal scanner service. (Admin Only)")
                         .addOption(OptionType.STRING, "action", "scan, stats, or status", true),
@@ -96,19 +97,26 @@ public class AdminStrikeCommand implements Command {
 
     private void handleBackup(SlashCommandInteractionEvent event) {
         event.deferReply(true).queue();
-        int totalStrikes = strikeService.getDatabase().getTotalStrikeCount();
-        int totalUsers = strikeService.getAllUsersWithStrikes().size();
+        try {
+            var backupPath = DatabaseManager.getInstance().createBackup();
+            int totalStrikes = strikeService.getDatabase().getTotalStrikeCount();
+            int totalUsers = strikeService.getAllUsersWithStrikes().size();
 
-        EmbedBuilder embed = new EmbedBuilder()
-                .setTitle("💾 Database Backup Status")
-                .setDescription("Current status of the strike database backups\n")
-                .setColor(Color.CYAN)
-                .addField("Total Strikes", String.valueOf(totalStrikes), false)
-                .addField("Total Users", String.valueOf(totalUsers), false)
-                .addField("Status", "✅ Automated backups active via SQLite", false)
-                .setTimestamp(java.time.Instant.now());
+            EmbedBuilder embed = new EmbedBuilder()
+                    .setTitle("💾 Database Backup Created")
+                    .setDescription("A full SQLite snapshot of the bot database was saved.")
+                    .setColor(Color.CYAN)
+                    .addField("Backup File", "`" + backupPath.getFileName() + "`", false)
+                    .addField("Location", "`" + backupPath.getParent() + "`", false)
+                    .addField("Total Strikes", String.valueOf(totalStrikes), true)
+                    .addField("Total Users", String.valueOf(totalUsers), true)
+                    .addField("Also Kept", "Latest copy + last 10 timestamped backups", false)
+                    .setTimestamp(java.time.Instant.now());
 
-        event.getHook().editOriginalEmbeds(embed.build()).queue();
+            event.getHook().editOriginalEmbeds(embed.build()).queue();
+        } catch (Exception e) {
+            event.getHook().editOriginal("❌ Backup failed: " + e.getMessage()).queue();
+        }
     }
 
     private void handleCheckRoles(SlashCommandInteractionEvent event) {

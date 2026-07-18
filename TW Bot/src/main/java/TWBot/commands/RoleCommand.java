@@ -80,9 +80,10 @@ public class RoleCommand implements Command {
         User targetUser = event.getOption("user").getAsUser();
         Role targetRole = event.getOption("role").getAsRole();
         Member moderator = event.getMember();
+        boolean isBotOwner = event.getUser().getId().equals(BotConfig.OWNER_USER_ID);
 
-        // Prevent self-assignment of roles
-        if (targetUser.getId().equals(moderator.getId())) {
+        // Only the bot owner may assign roles to themselves
+        if (targetUser.getId().equals(moderator.getId()) && !isBotOwner) {
             event.replyEmbeds(EmbedUtils.createErrorEmbed(
                     "You cannot assign roles to yourself."
             )).setEphemeral(true).queue();
@@ -115,6 +116,15 @@ public class RoleCommand implements Command {
         User targetUser = event.getOption("user").getAsUser();
         Role targetRole = event.getOption("role").getAsRole();
         Member moderator = event.getMember();
+        boolean isBotOwner = event.getUser().getId().equals(BotConfig.OWNER_USER_ID);
+
+        // Only the bot owner may remove roles from themselves
+        if (targetUser.getId().equals(moderator.getId()) && !isBotOwner) {
+            event.replyEmbeds(EmbedUtils.createErrorEmbed(
+                    "You cannot remove roles from yourself."
+            )).setEphemeral(true).queue();
+            return;
+        }
 
         if (!canManageRole(moderator, targetRole, guild)) {
             event.replyEmbeds(EmbedUtils.createErrorEmbed(
@@ -282,10 +292,12 @@ public class RoleCommand implements Command {
     }
 
     private boolean canManageRole(Member moderator, Role targetRole, Guild guild) {
-        if (moderator.isOwner()) {
+        // Bot owner bypasses hierarchy (including self-role assignment)
+        if (moderator.getId().equals(BotConfig.OWNER_USER_ID)) {
             return true;
         }
 
+        // Discord server owner does NOT get a special bypass for role management
         Role highestRole = moderator.getRoles().isEmpty() ? null : moderator.getRoles().get(0);
 
         if (highestRole == null) {

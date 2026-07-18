@@ -119,7 +119,7 @@ public class HelpCommand implements Command {
         embed.addField(
                 "⚙️ Administrator Tools",
                 "**`/dbinfo`** - View strike system statistics **(Admin+)**\n" +
-                "**`/backupstrikes`** - Backup strike database **(Admin+)**\n" +
+                "**`/backupstrikes`** - Create a full database backup **(Admin+)**\n" +
                 "**`/checkroles`** - Trigger manual role restoration check **(Admin+)**\n" +
                 "**`/appealscanner`** - Manage the automated appeal scanner **(Admin+)**\n" +
                 "**`/rolerestoration`** - Manage the role restoration service **(Admin+)**\n" +
