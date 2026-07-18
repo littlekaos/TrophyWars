@@ -4,6 +4,7 @@ import TWBot.TWBot;
 import TWBot.config.BotConfig;
 import TWBot.services.DataService;
 import TWBot.utils.EmbedUtils;
+import TWBot.utils.PermissionUtils;
 import net.dv8tion.jda.api.entities.Role;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 import net.dv8tion.jda.api.interactions.commands.OptionType;
@@ -53,11 +54,7 @@ public class CommandPermissionsCommand implements Command {
 
     @Override
     public void execute(SlashCommandInteractionEvent event) {
-        boolean isOwner = event.getUser().getId().equals(BotConfig.OWNER_USER_ID);
-        boolean hasOwnershipRole = event.getMember() != null && event.getMember().getRoles().stream()
-                .anyMatch(role -> role.getId().equals(BotConfig.SERVER_OWNERSHIP_ROLE_ID));
-
-        if (!isOwner && !hasOwnershipRole) {
+        if (!PermissionUtils.isServerOwnership(event.getMember())) {
             event.reply("❌ Only Server Ownership can manage command permissions.").setEphemeral(true).queue();
             return;
         }

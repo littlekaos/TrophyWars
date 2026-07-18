@@ -28,7 +28,7 @@ public class PaymentDueCommand implements Command {
 
     @Override
     public boolean hasPermission(SlashCommandInteractionEvent event, TWBot bot) {
-        return PermissionUtils.isAdmin(event.getMember(), bot.getConfig());
+        return PermissionUtils.isServerOwnership(event.getMember());
     }
 
     @Override

@@ -4,6 +4,7 @@ import TWBot.TWBot;
 import TWBot.commands.*;
 import TWBot.config.BotConfig;
 import TWBot.utils.EmbedUtils;
+import TWBot.utils.PermissionUtils;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
@@ -139,9 +140,19 @@ public class CommandEventListener extends ListenerAdapter {
     }
 
     private boolean checkPermissions(SlashCommandInteractionEvent event, String commandName, Command command) {
-        if (event.getUser().getId().equals(BotConfig.OWNER_USER_ID)) return true;
+        if (PermissionUtils.isBotOwner(event.getUser())) return true;
 
         if (event.getMember() == null) return false;
+
+        if ("paymentdue".equals(commandName)) {
+            boolean hasOwnershipRole = event.getMember().getRoles().stream()
+                    .anyMatch(role -> role.getId().equals(BotConfig.SERVER_OWNERSHIP_ROLE_ID));
+            if (!hasOwnershipRole) {
+                event.replyEmbeds(EmbedUtils.createErrorEmbed("Only Server Ownership can use this command.")).setEphemeral(true).queue();
+                return false;
+            }
+            return true;
+        }
 
         // Server Ownership role has access to ALL commands
         if (event.getMember().getRoles().stream()
