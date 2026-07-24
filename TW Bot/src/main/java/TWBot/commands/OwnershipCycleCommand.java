@@ -13,14 +13,12 @@ import net.dv8tion.jda.api.interactions.commands.build.Commands;
 import java.awt.Color;
 import java.time.Instant;
 import java.time.ZonedDateTime;
-import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
 
 public class OwnershipCycleCommand implements Command {
 
-    private static final ZoneId EST_ZONE = ZoneId.of("America/New_York");
     private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("MMMM d, yyyy");
 
     private final DataService dataService;
@@ -46,7 +44,7 @@ public class OwnershipCycleCommand implements Command {
         }
 
         long lastPing = dataService.getLastPingTimestamp(OwnershipPingService.PING_KEY);
-        ZonedDateTime now = ZonedDateTime.now(EST_ZONE);
+        ZonedDateTime now = ZonedDateTime.now(OwnershipPingService.EST_ZONE);
 
         if (lastPing == 0) {
             event.replyEmbeds(EmbedUtils.createEmbed(
@@ -56,15 +54,28 @@ public class OwnershipCycleCommand implements Command {
             return;
         }
 
-        ZonedDateTime lastPingDate = ZonedDateTime.ofInstant(Instant.ofEpochMilli(lastPing), EST_ZONE);
-        ZonedDateTime nextDue = lastPingDate.plusMonths(OwnershipPingService.INTERVAL_MONTHS);
+        ZonedDateTime lastPingDate = ZonedDateTime.ofInstant(Instant.ofEpochMilli(lastPing), OwnershipPingService.EST_ZONE);
+
+        // Mirror service undo of mistaken July migration for display accuracy
+        if (now.isBefore(OwnershipPingService.FINAL_QUARTERLY_DUE)
+                && lastPingDate.toLocalDate().equals(OwnershipPingService.YEARLY_BASELINE.toLocalDate())) {
+            lastPingDate = OwnershipPingService.LEGACY_BASELINE;
+        }
+
+        ZonedDateTime nextDue = OwnershipPingService.nextDueFrom(lastPingDate);
+        int interval = OwnershipPingService.currentIntervalMonths(lastPingDate);
+        boolean quarterly = OwnershipPingService.isQuarterlyPhase(lastPingDate);
         long monthsPassed = ChronoUnit.MONTHS.between(lastPingDate, now);
-        long monthsRemaining = Math.max(0, OwnershipPingService.INTERVAL_MONTHS - monthsPassed);
-        boolean isDue = monthsPassed >= OwnershipPingService.INTERVAL_MONTHS;
+        long monthsRemaining = Math.max(0, interval - monthsPassed);
+        boolean isDue = !now.isBefore(nextDue);
 
         String status = isDue
-                ? "⚠️ **Due now** — the " + OwnershipPingService.INTERVAL_MONTHS + "-month cycle is overdue."
-                : "✅ **On track** — " + monthsRemaining + " month(s) remaining in the current cycle.";
+                ? "⚠️ **Due now** — ownership reminder is overdue."
+                : "✅ **On track** — next reminder in about " + monthsRemaining + " month(s).";
+
+        String intervalLabel = quarterly
+                ? "Final quarterly → then yearly (July 16)"
+                : "Yearly (every July 16)";
 
         EmbedBuilder embed = new EmbedBuilder()
                 .setTitle(BotConfig.TW_EMOJI_MENTION + " Ownership Schedule")
@@ -72,7 +83,7 @@ public class OwnershipCycleCommand implements Command {
                 .setDescription(status)
                 .addField("📅 Last Cycle", lastPingDate.format(DATE_FORMATTER), true)
                 .addField("🗓️ Next Due", nextDue.format(DATE_FORMATTER), true)
-                .addField("⏱️ Interval", OwnershipPingService.INTERVAL_MONTHS + " months", true)
+                .addField("⏱️ Interval", intervalLabel, true)
                 .setFooter("Ownership Only")
                 .setTimestamp(Instant.now());
 

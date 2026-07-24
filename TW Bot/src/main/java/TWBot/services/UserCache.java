@@ -94,6 +94,21 @@ public class UserCache {
         return getUserInfo(userId);
     }
 
+    /** Non-blocking: never hits Discord REST from the event thread. */
+    public String getCachedUserInfo(String userId) {
+        if (userId == null || userId.isEmpty()) return "Unknown user";
+        UserDetails details = userDetailsCache.get(userId);
+        if (details != null) return details.tag + " (ID: " + details.id + ")";
+        if (jda != null) {
+            User user = jda.getUserById(userId);
+            if (user != null) {
+                cacheUser(user);
+                return user.getName() + " (ID: " + user.getId() + ")";
+            }
+        }
+        return "User ID: " + userId;
+    }
+
     public String[] getUserDisplayInfo(String userId) {
         if (userId == null || userId.isEmpty()) {
             return new String[]{"Unknown User", "Unknown"};

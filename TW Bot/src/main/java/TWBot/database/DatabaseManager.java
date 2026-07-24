@@ -7,10 +7,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.sql.*;
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
-import java.util.Comparator;
-import java.util.List;
 import java.util.Properties;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
@@ -19,10 +15,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
 
 public class DatabaseManager {
-    private static final int MAX_BACKUPS = 10;
     private static final long PERIODIC_BACKUP_HOURS = 6;
-    private static final DateTimeFormatter BACKUP_TIMESTAMP =
-            DateTimeFormatter.ofPattern("yyyyMMdd-HHmmss");
 
     private static volatile DatabaseManager instance;
     private final BotConfig config;
@@ -149,7 +142,7 @@ public class DatabaseManager {
     }
 
     /**
-     * Creates a consistent SQLite snapshot under backups/, keeps a latest copy, and prunes old files.
+     * Creates a consistent SQLite snapshot, overwriting the single backup file.
      */
     public synchronized Path createBackup() throws SQLException, IOException {
         if (dbPath == null) {
@@ -161,22 +154,25 @@ public class DatabaseManager {
 
         Files.createDirectories(backupDir);
 
-        String stamp = LocalDateTime.now().format(BACKUP_TIMESTAMP);
-        Path stampedBackup = backupDir.resolve(dbPath.getFileName().toString().replace(".db", "") + "-" + stamp + ".db");
-        Path latestBackup = backupDir.resolve(dbPath.getFileName().toString().replace(".db", "") + ".latest.db");
+        Path latestBackup = getLatestBackupPath();
+        Path tempBackup = backupDir.resolve(dbPath.getFileName().toString().replace(".db", "") + ".backup.tmp");
 
-        Files.deleteIfExists(stampedBackup);
+        Files.deleteIfExists(tempBackup);
 
-        String sqlitePath = stampedBackup.toAbsolutePath().toString().replace('\\', '/').replace("'", "''");
+        String sqlitePath = tempBackup.toAbsolutePath().toString().replace('\\', '/').replace("'", "''");
         try (Statement stmt = sharedConnection.createStatement()) {
             stmt.execute("VACUUM INTO '" + sqlitePath + "'");
         }
 
-        Files.copy(stampedBackup, latestBackup, StandardCopyOption.REPLACE_EXISTING);
-        pruneOldBackups();
+        Files.move(tempBackup, latestBackup, StandardCopyOption.REPLACE_EXISTING);
+        pruneExtraBackups(latestBackup);
 
-        System.out.println("[DatabaseBackup] Saved backup to " + stampedBackup);
-        return stampedBackup;
+        System.out.println("[DatabaseBackup] Saved backup to " + latestBackup);
+        return latestBackup;
+    }
+
+    private Path getLatestBackupPath() {
+        return backupDir.resolve(dbPath.getFileName().toString().replace(".db", "") + ".latest.db");
     }
 
     private void restoreFromLatestBackupIfMissing() {
@@ -187,7 +183,7 @@ public class DatabaseManager {
             if (Files.exists(dbPath) && Files.size(dbPath) > 0) {
                 return;
             }
-            Path latestBackup = backupDir.resolve(dbPath.getFileName().toString().replace(".db", "") + ".latest.db");
+            Path latestBackup = getLatestBackupPath();
             if (!Files.exists(latestBackup) || Files.size(latestBackup) == 0) {
                 return;
             }
@@ -199,20 +195,16 @@ public class DatabaseManager {
         }
     }
 
-    private void pruneOldBackups() throws IOException {
-        String prefix = dbPath.getFileName().toString().replace(".db", "") + "-";
+    /** Deletes any leftover timestamped backups so only the single latest file remains. */
+    private void pruneExtraBackups(Path keep) throws IOException {
+        if (!Files.isDirectory(backupDir)) {
+            return;
+        }
         try (Stream<Path> stream = Files.list(backupDir)) {
-            List<Path> stamped = stream
-                    .filter(Files::isRegularFile)
-                    .filter(p -> {
-                        String name = p.getFileName().toString();
-                        return name.startsWith(prefix) && name.endsWith(".db");
-                    })
-                    .sorted(Comparator.comparing(Path::getFileName).reversed())
-                    .toList();
-
-            for (int i = MAX_BACKUPS; i < stamped.size(); i++) {
-                Files.deleteIfExists(stamped.get(i));
+            for (Path path : stream.filter(Files::isRegularFile).toList()) {
+                if (!path.equals(keep)) {
+                    Files.deleteIfExists(path);
+                }
             }
         }
     }

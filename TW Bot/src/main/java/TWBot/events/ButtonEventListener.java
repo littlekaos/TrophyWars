@@ -12,8 +12,8 @@ import net.dv8tion.jda.api.entities.Role;
 import net.dv8tion.jda.api.entities.channel.concrete.TextChannel;
 import net.dv8tion.jda.api.events.interaction.component.ButtonInteractionEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
-import net.dv8tion.jda.api.interactions.components.ActionRow;
-import net.dv8tion.jda.api.interactions.components.buttons.Button;
+import net.dv8tion.jda.api.components.actionrow.ActionRow;
+import net.dv8tion.jda.api.components.buttons.Button;
 
 import java.util.List;
 import java.util.Map;
@@ -200,10 +200,10 @@ public class ButtonEventListener extends ListenerAdapter {
                 .setTimestamp(java.time.Instant.now());
 
         managerChannel.sendMessage(pings).setEmbeds(embed.build())
-                .addActionRow(
+                .addComponents(ActionRow.of(
                         Button.success("approve:" + confirmId, "Approve"),
                         Button.danger("deny:" + confirmId, "Deny")
-                )
+                ))
                 .queue();
 
         event.getHook().editOriginal("✅ Request submitted to management for approval.").setEmbeds().setComponents().queue();

@@ -1,6 +1,10 @@
 # Project exclude paths
 /out/
 /TW Bot/target/
+/target/
+
+# IntelliJ regenerates these from pom.xml
+*.iml
 
 # Secrets — never commit
 .env

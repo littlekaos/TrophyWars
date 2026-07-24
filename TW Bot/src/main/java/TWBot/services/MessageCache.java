@@ -11,7 +11,9 @@ public class MessageCache {
 
     private final Map<String, String> messageCache = new ConcurrentHashMap<>(1000);
     private final Map<String, String> userCache = new ConcurrentHashMap<>(1000);
+    private final Map<String, Boolean> botFlags = new ConcurrentHashMap<>(1000);
 
+    /** Full content cache for human messages. */
     public void cacheMessage(Message message, String authorId) {
         if (message == null) return;
 
@@ -24,6 +26,14 @@ public class MessageCache {
 
         messageCache.put(message.getId(), content);
         userCache.put(message.getId(), authorId);
+        botFlags.put(message.getId(), false);
+    }
+
+    /** Lightweight tracking so bot deletes can be skipped without storing content. */
+    public void trackAuthor(String messageId, String authorId, boolean isBot) {
+        if (messageId == null) return;
+        if (authorId != null) userCache.put(messageId, authorId);
+        botFlags.put(messageId, isBot);
     }
 
     public String getMessageContent(String messageId) {
@@ -34,9 +44,18 @@ public class MessageCache {
         return userCache.get(messageId);
     }
 
+    public boolean isBotMessage(String messageId) {
+        return Boolean.TRUE.equals(botFlags.get(messageId));
+    }
+
+    public boolean hasAuthor(String messageId) {
+        return userCache.containsKey(messageId);
+    }
+
     public void removeMessage(String messageId) {
         messageCache.remove(messageId);
         userCache.remove(messageId);
+        botFlags.remove(messageId);
     }
 
     public void removeMessages(Iterable<String> messageIds) {

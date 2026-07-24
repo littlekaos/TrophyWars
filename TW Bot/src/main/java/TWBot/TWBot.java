@@ -4,7 +4,24 @@ import TWBot.config.BotConfig;
 import TWBot.database.DatabaseManager;
 import TWBot.events.*;
 import TWBot.repositories.SQLiteEventNameRepository;
-import TWBot.services.*;
+import TWBot.services.AppealScannerService;
+import TWBot.services.AppealService;
+import TWBot.services.ConfirmationService;
+import TWBot.services.DataService;
+import TWBot.services.DemotionService;
+import TWBot.services.DemotionSyncService;
+import TWBot.services.EventsSetupManager;
+import TWBot.services.LoggingService;
+import TWBot.services.MessageCache;
+import TWBot.services.MuteService;
+import TWBot.services.OwnershipPingService;
+import TWBot.services.RestrictionService;
+import TWBot.services.RoleRestorationService;
+import TWBot.services.StrikeScannerService;
+import TWBot.services.StrikeService;
+import TWBot.services.UserCache;
+import TWBot.services.VoiceChannelManager;
+import TWBot.services.VoiceChannelService;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.JDABuilder;
 import net.dv8tion.jda.api.entities.Activity;
@@ -32,7 +49,6 @@ public class TWBot {
     private VoiceChannelManager voiceChannelManager;
     private EventsSetupManager eventsSetupManager;
     private OwnershipPingService ownershipPingService;
-    private StaffChannelArchiveService staffChannelArchiveService;
     private MessageCache messageCache;
     private UserCache userCache;
 
@@ -92,7 +108,9 @@ public class TWBot {
                             GatewayIntent.GUILD_MESSAGES,
                             GatewayIntent.MESSAGE_CONTENT,
                             GatewayIntent.GUILD_MESSAGE_REACTIONS,
-                            GatewayIntent.GUILD_VOICE_STATES
+                            GatewayIntent.GUILD_VOICE_STATES,
+                            GatewayIntent.GUILD_INVITES,
+                            GatewayIntent.GUILD_EXPRESSIONS
                     )
                     .addEventListeners(
                             new CommandEventListener(this),
@@ -103,7 +121,8 @@ public class TWBot {
                             new SelectMenuEventListener(this),
                             new DemotionProtectionListener(demotionService),
                             new VoiceEventListener(this, voiceChannelManager, eventsSetupManager),
-                            new EventsSetupCommandListener(this)
+                            new EventsSetupCommandListener(this),
+                            new ServerLogEventListener(this)
                     )
                     .build()
                     .awaitReady();
@@ -120,8 +139,6 @@ public class TWBot {
             this.ownershipPingService = new OwnershipPingService(jda, dataService);
             this.ownershipPingService.start();
 
-            this.staffChannelArchiveService = new StaffChannelArchiveService(dataService);
-            this.staffChannelArchiveService.start(jda);
             this.strikeScannerService.initialize(jda);
 
             jda.getGuilds().forEach(guild -> {
@@ -210,10 +227,6 @@ public class TWBot {
 
     public EventsSetupManager getEventsSetupManager() {
         return eventsSetupManager;
-    }
-
-    public StaffChannelArchiveService getStaffChannelArchiveService() {
-        return staffChannelArchiveService;
     }
 
     public void shutdown() {

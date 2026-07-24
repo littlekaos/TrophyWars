@@ -19,6 +19,7 @@ public class LoggingService {
 
     // Hardcoded IDs for specific channels as requested
     private static final String MOD_LOG_CHANNEL_ID = BotConfig.MOD_LOG_CHANNEL_ID;
+    private static final String SERVER_LOG_CHANNEL_ID = BotConfig.SERVER_LOG_CHANNEL_ID;
     private static final String STAFF_STRIKES_CHANNEL_ID = BotConfig.STAFF_STRIKE_LOG_CHANNEL_ID;
 
     public TextChannel getLogChannel(Guild guild, String channelName) {
@@ -36,6 +37,11 @@ public class LoggingService {
             case "moderation-logs":
                 logChannel = guild.getTextChannelById(MOD_LOG_CHANNEL_ID);
                 break;
+            case "server-logs":
+                if (SERVER_LOG_CHANNEL_ID != null && !SERVER_LOG_CHANNEL_ID.isBlank()) {
+                    logChannel = guild.getTextChannelById(SERVER_LOG_CHANNEL_ID);
+                }
+                break;
             case "staff-strikes":
                 logChannel = guild.getTextChannelById(STAFF_STRIKES_CHANNEL_ID);
                 break;
@@ -43,7 +49,14 @@ public class LoggingService {
 
         // Fallback to finding by name if ID lookup failed or for other channel names
         if (logChannel == null) {
-            logChannel = guild.getTextChannelsByName(channelName, true).stream().findFirst().orElse(null);
+            if ("server-logs".equals(channelName)) {
+                logChannel = guild.getTextChannelsByName("tw-server-logs", true).stream().findFirst().orElse(null);
+                if (logChannel == null) {
+                    logChannel = guild.getTextChannelsByName("server-logs", true).stream().findFirst().orElse(null);
+                }
+            } else {
+                logChannel = guild.getTextChannelsByName(channelName, true).stream().findFirst().orElse(null);
+            }
         }
 
         if (logChannel != null) {
@@ -79,7 +92,12 @@ public class LoggingService {
     public void logAction(Guild guild, String channelName, MessageEmbed embed) {
         TextChannel logChannel = getLogChannel(guild, channelName);
         if (logChannel != null) {
-            logChannel.sendMessageEmbeds(embed).queue();
+            logChannel.sendMessageEmbeds(embed).queue(
+                    null,
+                    err -> System.err.println("[LoggingService] Failed to send to #" + channelName + ": " + err.getMessage())
+            );
+        } else {
+            System.err.println("[LoggingService] No log channel found for '" + channelName + "' in guild " + guild.getName());
         }
     }
 

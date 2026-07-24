@@ -110,7 +110,7 @@ public class AdminStrikeCommand implements Command {
                     .addField("Location", "`" + backupPath.getParent() + "`", false)
                     .addField("Total Strikes", String.valueOf(totalStrikes), true)
                     .addField("Total Users", String.valueOf(totalUsers), true)
-                    .addField("Also Kept", "Latest copy + last 10 timestamped backups", false)
+                    .addField("Retention", "Only one backup kept (overwritten each time)", false)
                     .setTimestamp(java.time.Instant.now());
 
             event.getHook().editOriginalEmbeds(embed.build()).queue();

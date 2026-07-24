@@ -392,14 +392,6 @@ public class DataService {
     }
 
     public void logMessage(String guildId, String channelId, String messageId, String userId, String content, String action) {
-        archiveMessage(guildId, channelId, messageId, userId, content, action, System.currentTimeMillis());
-    }
-
-    /**
-     * Archives a Discord message into tw_message_logs. Duplicate messageIds are ignored.
-     */
-    public void archiveMessage(String guildId, String channelId, String messageId, String userId,
-                               String content, String action, long timestamp) {
         try (Connection conn = DatabaseManager.getInstance().getConnection()) {
             String sql = "INSERT OR IGNORE INTO tw_message_logs (guildId, channelId, messageId, userId, content, action, timestamp) " +
                        "VALUES (?, ?, ?, ?, ?, ?, ?)";
@@ -410,61 +402,12 @@ public class DataService {
                 pstmt.setString(4, userId);
                 pstmt.setString(5, content);
                 pstmt.setString(6, action);
-                pstmt.setLong(7, timestamp);
+                pstmt.setLong(7, System.currentTimeMillis());
                 pstmt.executeUpdate();
             }
         } catch (Exception e) {
-            System.err.println("Failed to archive message to DB: " + e.getMessage());
+            System.err.println("Failed to log message to DB: " + e.getMessage());
         }
-    }
-
-    public boolean hasMessageArchived(String messageId) {
-        try (Connection conn = DatabaseManager.getInstance().getConnection()) {
-            String sql = "SELECT 1 FROM tw_message_logs WHERE messageId = ? LIMIT 1";
-            try (PreparedStatement pstmt = conn.prepareStatement(sql)) {
-                pstmt.setString(1, messageId);
-                try (ResultSet rs = pstmt.executeQuery()) {
-                    return rs.next();
-                }
-            }
-        } catch (Exception e) {
-            System.err.println("Failed to check archived message: " + e.getMessage());
-        }
-        return false;
-    }
-
-    public long getLatestArchivedTimestamp(String channelId) {
-        try (Connection conn = DatabaseManager.getInstance().getConnection()) {
-            String sql = "SELECT MAX(timestamp) AS latest FROM tw_message_logs WHERE channelId = ?";
-            try (PreparedStatement pstmt = conn.prepareStatement(sql)) {
-                pstmt.setString(1, channelId);
-                try (ResultSet rs = pstmt.executeQuery()) {
-                    if (rs.next()) {
-                        return rs.getLong("latest");
-                    }
-                }
-            }
-        } catch (Exception e) {
-            System.err.println("Failed to get latest archived timestamp: " + e.getMessage());
-        }
-        return 0;
-    }
-
-    public int countArchivedMessages(String channelId) {
-        try (Connection conn = DatabaseManager.getInstance().getConnection()) {
-            String sql = "SELECT COUNT(*) AS total FROM tw_message_logs WHERE channelId = ?";
-            try (PreparedStatement pstmt = conn.prepareStatement(sql)) {
-                pstmt.setString(1, channelId);
-                try (ResultSet rs = pstmt.executeQuery()) {
-                    if (rs.next()) {
-                        return rs.getInt("total");
-                    }
-                }
-            }
-        } catch (Exception e) {
-            System.err.println("Failed to count archived messages: " + e.getMessage());
-        }
-        return 0;
     }
 
     public void logGeneral(String guildId, String userId, String eventType, String details) {

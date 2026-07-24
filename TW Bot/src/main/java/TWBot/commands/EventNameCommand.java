@@ -13,9 +13,11 @@ import net.dv8tion.jda.api.interactions.commands.OptionType;
 import net.dv8tion.jda.api.interactions.commands.build.CommandData;
 import net.dv8tion.jda.api.interactions.commands.build.Commands;
 import net.dv8tion.jda.api.interactions.commands.build.SubcommandData;
-import net.dv8tion.jda.api.interactions.components.text.TextInput;
-import net.dv8tion.jda.api.interactions.components.text.TextInputStyle;
-import net.dv8tion.jda.api.interactions.modals.Modal;
+import net.dv8tion.jda.api.components.label.Label;
+import net.dv8tion.jda.api.components.textinput.TextInput;
+import net.dv8tion.jda.api.components.textinput.TextInputStyle;
+import net.dv8tion.jda.api.interactions.InteractionContextType;
+import net.dv8tion.jda.api.modals.Modal;
 
 
 import java.awt.Color;
@@ -45,7 +47,7 @@ public class EventNameCommand implements Command {
         return List.of(Commands.slash("eventname", "Submit your name for a current event")
                 .addSubcommands(EVENTNAME_SUBMIT, EVENTNAME_CHECK)
                 .setDefaultPermissions(DefaultMemberPermissions.ENABLED)
-                .setGuildOnly(true));
+                .setContexts(InteractionContextType.GUILD));
     }
 
     @Override
@@ -79,14 +81,14 @@ public class EventNameCommand implements Command {
     }
 
     private void handleEventNameSubmit(SlashCommandInteractionEvent event) {
-        TextInput nameInput = TextInput.create("name", "Event Name", TextInputStyle.SHORT)
+        TextInput nameInput = TextInput.create("name", TextInputStyle.SHORT)
                 .setPlaceholder("This is the name you are going to play under")
                 .setRequired(true)
                 .setMaxLength(50)
                 .build();
 
         Modal modal = Modal.create("eventNameModal", "ZombsRoyale Eventname Form")
-                .addActionRow(nameInput)
+                .addComponents(Label.of("Event Name", nameInput))
                 .build();
 
         event.replyModal(modal).queue();

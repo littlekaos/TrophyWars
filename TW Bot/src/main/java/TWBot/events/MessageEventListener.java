@@ -24,45 +24,31 @@ public class MessageEventListener extends ListenerAdapter {
 
     @Override
     public void onMessageReceived(MessageReceivedEvent event) {
-        boolean isArchiveChannel = event.isFromGuild()
-                && bot.getStaffChannelArchiveService() != null
-                && bot.getStaffChannelArchiveService().isArchiveChannel(
-                        event.getChannel().getId(),
-                        event.getChannel().getName());
-
         if (event.getAuthor().isBot()) {
-            // Still archive bot embeds/logs from staff moderation channels
-            if (isArchiveChannel) {
-                bot.getStaffChannelArchiveService().archiveMessageLive(event.getMessage());
-            }
-
-            if (event.isWebhookMessage()) {
-            } else {
+            // Track author only so deletes can be skipped; never store bot content.
+            bot.getMessageCache().trackAuthor(event.getMessageId(), event.getAuthor().getId(), true);
+            if (!event.isWebhookMessage()) {
                 String channelId = event.getChannel().getId();
                 List<String> autoReactionChannels = bot.getConfig().getAutoReactionChannels();
                 if (autoReactionChannels.contains(channelId)) {
                     addReactionsToMessage(event.getMessage());
                 }
-                return;
             }
+            return;
         }
 
         bot.getUserCache().cacheUser(event.getAuthor());
         bot.getMessageCache().cacheMessage(event.getMessage(), event.getAuthor().getId());
 
         if (event.isFromGuild()) {
-            if (isArchiveChannel) {
-                bot.getStaffChannelArchiveService().archiveMessageLive(event.getMessage());
-            } else {
-                bot.getDataService().logMessage(
-                        event.getGuild().getId(),
-                        event.getChannel().getId(),
-                        event.getMessageId(),
-                        event.getAuthor().getId(),
-                        event.getMessage().getContentRaw(),
-                        "RECEIVED"
-                );
-            }
+            bot.getDataService().logMessage(
+                    event.getGuild().getId(),
+                    event.getChannel().getId(),
+                    event.getMessageId(),
+                    event.getAuthor().getId(),
+                    event.getMessage().getContentRaw(),
+                    "RECEIVED"
+            );
         }
 
         Member member = event.getMember();

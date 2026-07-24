@@ -10,6 +10,7 @@ import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.entities.User;
 import net.dv8tion.jda.api.entities.channel.concrete.TextChannel;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
+import net.dv8tion.jda.api.interactions.InteractionContextType;
 import net.dv8tion.jda.api.interactions.commands.DefaultMemberPermissions;
 import net.dv8tion.jda.api.interactions.commands.OptionType;
 import net.dv8tion.jda.api.interactions.commands.build.CommandData;
@@ -39,20 +40,20 @@ public class AppealCommand implements Command {
                         .addOption(OptionType.INTEGER, "strike2", "Second strike number to appeal (optional)", false)
                         .addOption(OptionType.STRING, "reason2", "Reason for appealing the second strike (required if strike2 is provided)", false)
                         .setDefaultPermissions(DefaultMemberPermissions.ENABLED)
-                        .setGuildOnly(true),
+                        .setContexts(InteractionContextType.GUILD),
                 Commands.slash("myappeals", "View your strike appeals.")
                         .setDefaultPermissions(DefaultMemberPermissions.ENABLED)
-                        .setGuildOnly(true),
+                        .setContexts(InteractionContextType.GUILD),
                 Commands.slash("pendingappeals", "View all pending appeals. (Staff Only)")
-                        .setGuildOnly(true),
+                        .setContexts(InteractionContextType.GUILD),
                 Commands.slash("reviewappeal", "Review a pending appeal. (Staff Only)")
                         .addOption(OptionType.INTEGER, "appealid", "Appeal ID to review", true)
                         .addOption(OptionType.STRING, "decision", "approve or deny", true)
                         .addOption(OptionType.STRING, "reason", "Reason for the decision", true)
-                        .setGuildOnly(true),
+                        .setContexts(InteractionContextType.GUILD),
                 Commands.slash("undoappeal", "Reset a user's appeal so they can appeal again. (Admin Only)")
                         .addOption(OptionType.USER, "user", "User whose appeal to reset", true)
-                        .setGuildOnly(true)
+                        .setContexts(InteractionContextType.GUILD)
         );
     }
 
