@@ -169,8 +169,12 @@ public class CommandEventListener extends ListenerAdapter {
                 }
             }
 
-            // Check for explicit enables for ANY of the user's roles
+            // Check for explicit enables for ANY of the user's roles.
+            // The Moderator role cannot be granted kick, ban, or unban this way.
             for (String roleId : userRoleIds) {
+                if (isBanOrKickCommand(commandName) && BotConfig.MODERATOR_ROLE_ID.equals(roleId)) {
+                    continue;
+                }
                 if (perms.containsKey(roleId) && perms.get(roleId)) {
                     return true; // Explicitly allowed by cmdperm!
                 }
@@ -192,5 +196,9 @@ public class CommandEventListener extends ListenerAdapter {
         }
 
         return true;
+    }
+
+    private boolean isBanOrKickCommand(String commandName) {
+        return "ban".equals(commandName) || "kick".equals(commandName) || "unban".equals(commandName);
     }
 }

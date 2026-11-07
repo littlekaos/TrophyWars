@@ -68,9 +68,9 @@ public class HelpCommand implements Command {
                 "**`/unmute`** - Unmute a user **(Moderator+)**\n" +
                 "**`/timeout`** - Timeout a user **(Moderator+)**\n" +
                 "**`/untimeout`** - Remove timeout from a user **(Moderator+)**\n" +
-                "**`/kick`** - Kick a user **(Moderator+)**\n" +
-                "**`/ban`** - Ban a user **(Moderator+)**\n" +
-                "**`/unban`** - Unban a user **(Moderator+)**\n" +
+                "**`/kick`** - Kick a user **(Staff / Admin; not Moderator)**\n" +
+                "**`/ban`** - Ban a user **(Staff / Admin; not Moderator)**\n" +
+                "**`/unban`** - Unban a user **(Staff / Admin; not Moderator)**\n" +
                 "**`/purge`** - Delete multiple messages **(Moderator+)**\n" +
                 "**`/reason`** - View ban/unban history **(Moderator+)**\n" +
                 "**`/role add/remove`** - Manage user roles **(Moderator+ / Lead)**\n" +
