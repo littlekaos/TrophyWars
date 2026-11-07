@@ -18,6 +18,22 @@ public class PermissionUtils {
                 .anyMatch(role -> modRoles.contains(role.getId()));
     }
 
+    /**
+     * Kick, ban, and unban. The Moderator role does not grant these.
+     * Other mod-tier roles and every admin role still do. A member who also
+     * holds one of those roles keeps access.
+     */
+    public static boolean canBanOrKick(Member member, BotConfig config) {
+        if (member == null) {
+            return false;
+        }
+
+        List<String> modRoles = config.getModRoles();
+        return member.getRoles().stream()
+                .anyMatch(role -> modRoles.contains(role.getId())
+                        && !BotConfig.MODERATOR_ROLE_ID.equals(role.getId()));
+    }
+
     public static boolean isAdmin(Member member, BotConfig config) {
         if (member == null) {
             return false;

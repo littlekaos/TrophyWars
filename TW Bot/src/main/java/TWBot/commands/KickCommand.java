@@ -35,7 +35,7 @@ public class KickCommand implements Command {
 
     @Override
     public boolean hasPermission(SlashCommandInteractionEvent event, TWBot bot) {
-        return PermissionUtils.isModerator(event.getMember(), bot.getConfig());
+        return PermissionUtils.canBanOrKick(event.getMember(), bot.getConfig());
     }
 
     @Override

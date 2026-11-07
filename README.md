@@ -118,8 +118,9 @@ Voice channel details are documented in Discord via `/vchelp`.
 
 Most moderation commands check Discord roles defined in `BotConfig.java` (Server Ownership, Manager, Co-Manager, Overseer, Moderator, Staff, etc.). In general:
 
-- **Moderator** — warn, mute, kick, ban, strikes, void-checker, etc.
-- **Admin** — clear strikes, demotion list management, database backups, appeal scanner controls
+- **Moderator** — warn, mute, timeout, strikes, void-checker, etc. The Moderator role cannot kick, ban, or unban.
+- **Staff / News Reporter** — the same moderation commands, including kick, ban, and unban.
+- **Admin** — kick, ban, unban, clear strikes, demotion list management, database backups, appeal scanner controls
 - **Staff** — appeal review commands, reaction scan
 
 Server Ownership and admin roles have broad access. `/cmdperm` lets server ownership configure per-role command access dynamically.
